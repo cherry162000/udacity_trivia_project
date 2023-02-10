@@ -44,15 +44,16 @@ def create_app(test_config=None):
         try:
             select_questions = Question.query.order_by(Question.id).all()
             cur_questions= paginate_selection(request,select_questions)
-            curr_categories=[]
+            category_id=[]
+            category_type=[]
+            current_categories={}
             categories = Category.query.all()
             for i in categories:
-                curr_categories.append({
-                    'id':i.id,
-                    'type':i.type
-                })
+                category_id.append(i.id)
+                category_type.append(i.type)    
             print("cur que:",cur_questions)
-            print("_________cur_categories:",curr_categories)
+            current_categories = dict(zip(category_id, category_type))
+            print("________________curre cat___________:",current_categories)
             if len(cur_questions) ==0:
                 abort(404)
             else:    
@@ -60,7 +61,7 @@ def create_app(test_config=None):
                     'success':True,
                     'questions':cur_questions,
                     'total_questions': len(Question.query.all()),
-                    'categories':curr_categories
+                    'categories':current_categories
                 })
         except Exception as e:
             print("get question exception",e)
@@ -68,20 +69,20 @@ def create_app(test_config=None):
      # Get endpoints for categories
     @app.route('/categories')
     def get_categories():
-        curr_categories=[]
+        category_id=[]
+        category_type=[]
+        current_categories={}
         categories = Category.query.all()
         for i in categories:
-            curr_categories.append({
-                    'id':i.id,
-                    'type':i.type
-                })
+            category_id.append(i.id)
+            category_type.append(i.type)
 
         if len(categories) == 0:
             abort(404)
         print("cate:",categories)
         return jsonify({
         'success': True,
-        'categories': categories
+        'categories': current_categories
         })
     """
     @TODO:
@@ -150,7 +151,7 @@ def create_app(test_config=None):
                 'success':True,
                 'New_question_ID':Question.id,
                 'curr_questions':new_questions,
-                'Total_Questions':len(Question.quuery.all())
+                'Total_Questions':len(Question.query.all())
             })
         except Exception as e:
             print("Exception as e:",e)
@@ -186,18 +187,26 @@ def create_app(test_config=None):
     categories in the left column will cause only questions of that
     category to be shown.
     """
+ 
+
     @app.route('/categories/<int:category_id>/questions')
     def get_categories_questions(category_id):
         try:
             select_question = Question.query.filter(Question.category==str(category_id)).all()
             print("Select:",select_question)
             paginate_question = paginate_selection(request,select_question)
+            print("_________paginate_______",paginate_question)
+            curr_cat=Category.query.get(category_id)
+            # current_cat[curr_cat.id]=curr_cat.type
+            print("curre cat__________",curr_cat)
             return jsonify({
                 'success':True,
-                'Questions':paginate_question,
-                'Total_Questons_category':len(select_question)
+                'questions':paginate_question,
+                'Total_Questions_category':len(select_question),
+                'current_cat':curr_cat.type
             })
-        except:
+        except Exception as e:
+            print("cat ques exception____________:",e)
             abort(404)
     """
     @TODO:
@@ -254,6 +263,3 @@ def create_app(test_config=None):
             422
         )
     return app
-
-
-    
